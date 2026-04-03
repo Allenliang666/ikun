@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>四柱调试</title></head>
+<body>
+<h1>ikun天文历四柱调试</h1>
+<pre id="log" style="background:#f0f0f0;padding:10px;white-space:pre-wrap;max-height:400px;overflow:auto"></pre>
+<script>
+// Debug function to capture all logs
+var debugLog = document.getElementById('log');
+function log(msg) {
+  debugLog.textContent += msg + '\n';
+  console.log(msg);
+}
+log('=== 开始调试 ===');
+log('window.obb defined: ' + (typeof window.obb !== 'undefined'));
+</script>
+<script src="sxwnl/core.js"></script>
+<script>
+log('After loading core.js:');
+log('typeof obb: ' + typeof obb);
+log('window.obb: ' + typeof window.obb);
+
+if (typeof obb !== 'undefined') {
+  log('obb keys: ' + Object.keys(obb).slice(0,20).join(', '));
+  log('obb.mingLiBaZi: ' + typeof obb.mingLiBaZi);
+  
+  if (obb.mingLiBaZi) {
+    try {
+      // Test: 2026-04-03 22:00 Beijing
+      var year=2026, month=4, day=3, hour=22;
+      var a = Math.floor((14 - month) / 12);
+      var y = year + 4800 - a;
+      var m = month + 12 * a - 3;
+      var jd = day + (hour/24.0) + Math.floor((153 * m + 2) / 5) + 365*y + Math.floor(y/4) - Math.floor(y/100) + Math.floor(y/400) - 32045 - 0.5;
+      var J2000 = 2451545;
+      var ob = {};
+      obb.mingLiBaZi(jd - J2000, 120 * Math.PI / 180, ob);
+      log('Result: bz_jn=' + ob.bz_jn + ' bz_jy=' + ob.bz_jy + ' bz_jr=' + ob.bz_jr + ' bz_js=' + ob.bz_js);
+    } catch(e) {
+      log('ERROR: ' + e.message);
+      log(e.stack);
+    }
+  }
+} else {
+  log('ERROR: obb is undefined!');
+  // Check if script loaded
+  var scripts = document.getElementsByTagName('script');
+  for (var i=0; i<scripts.length; i++) {
+    log('Script ' + i + ': ' + scripts[i].src);
+  }
+}
+
+log('=== 调试完成 ===');
+</script>
+</body>
+</html>
