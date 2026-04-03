@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>四柱测试</title></head>
+<body>
+<h1>ikun天文历四柱测试</h1>
+<pre id="result">加载中...</pre>
+<script src="sxwnl/core.js"></script>
+<script>
+function test() {
+  var r = document.getElementById('result');
+  try {
+    if (typeof obb === 'undefined') {
+      r.textContent = '错误: obb 未定义';
+      return;
+    }
+    if (!obb.mingLiBaZi) {
+      r.textContent = '错误: obb.mingLiBaZi 不存在';
+      return;
+    }
+    // 测试: 2026年4月3日22时
+    var year = 2026, month = 4, day = 3, hour = 22;
+    var a = Math.floor((14 - month) / 12);
+    var y = year + 4800 - a;
+    var m = month + 12 * a - 3;
+    var jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4)
+           - Math.floor(y / 100) + Math.floor(y / 400) - 32045 + 0.5 + hour / 24.0;
+    var J2000 = 2451545;
+    var ob = {};
+    obb.mingLiBaZi(jd - J2000, 120 * Math.PI / 180, ob);
+    
+    r.textContent = '测试时间: ' + year + '-' + month + '-' + day + ' ' + hour + ':00\n' +
+      '年柱: ' + ob.bz_jn + '\n' +
+      '月柱: ' + ob.bz_jy + '\n' +
+      '日柱: ' + ob.bz_jr + '\n' +
+      '时柱: ' + ob.bz_js + '\n\n' +
+      'obb.Gan: ' + JSON.stringify(obb.Gan) + '\n' +
+      'obb.Zhi: ' + JSON.stringify(obb.Zhi);
+  } catch(e) {
+    r.textContent = '执行错误: ' + e.message + '\n' + e.stack;
+  }
+}
+setTimeout(test, 500);
+</script>
+</body>
+</html>
