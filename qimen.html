@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>奇门遁甲排盘</title>
+<script src="sxwnl/core.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"SimSun",serif;background:linear-gradient(135deg,#1a1a2e,#16213e);min-height:100vh;padding:15px}
+a{color:#fff;background:#666;padding:8px 16px;border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:10px}
+h1{color:#b8860b;text-align:center;margin:8px 0;font-size:1.2rem}
+.in{text-align:center;margin:8px 0}
+.in input{padding:6px;width:50px;border:1px solid #ddd;border-radius:4px}
+.in button{padding:6px 14px;background:#b8860b;color:#fff;border:none;border-radius:4px;cursor:pointer}
+.info{background:#fff;padding:8px;border-radius:8px;max-width:460px;margin:0 auto 8px;font-size:0.8rem;line-height:1.4}
+.qimen{background:#fff;padding:8px;border-radius:8px;max-width:400px;margin:0 auto}
+.qg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.gc{background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:4px;text-align:center;font-size:0.75rem}
+.gc .gn{color:#888;font-size:0.65rem}
+.gc .tp{font-size:1rem;font-weight:bold;color:#b8860b}
+.gc .dp{font-size:0.85rem;color:#666}
+.gc .men{color:#1565c0}
+.gc .xing{color:#2e7d32}
+.gc .shen{color:#7b1fa2}
+</style>
+</head>
+<body>
+<div class="in"><a href="index.html">← 返回</a></div>
+<h1>奇门遁甲（时家转盘）</h1>
+<div class="in">
+<input id="y" value="2002"><input id="m" value="4"><input id="d" value="7"><input id="h" value="8">
+<button onclick="qimenCalc()">起局</button>
+<button onclick="nowTime()">现在</button>
+</div>
+<div class="info" id="info"></div>
+<div class="qimen" id="qm"></div>
+<script>
+var T=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+var Z=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+var MEN=["休","生","伤","杜","景","死","惊","开"];
+var XN=["天蓬","天芮","天冲","天辅","天禽","天英","天任","天柱","天心"];
+var SN=["值符","螣蛇","太阴","六合","白虎","玄武","九地","九天"];
+var GONG=["坎一宫","坤二宫","震三宫","巽四宫","中五宫","乾六宫","兑七宫","艮八宫","离九宫"];
+var SHOW=[4,9,2,3,5,7,8,1,6];
+var GONG_XING=["天蓬","天芮","天冲","天辅","天禽","天英","天任","天柱","天心"];
+var GONG_MEN=["休","死","伤","杜","","开","惊","生","景"];
+var SQ61=["戊","己","庚","辛","壬","癸","丁","丙","乙"];
+
+function nowTime(){
+var n=new Date();
+document.getElementById("y").value=n.getFullYear();
+document.getElementById("m").value=n.getMonth()+1;
+document.getElementById("d").value=n.getDate();
+document.getElementById("h").value=n.getHours();
+}
+
+function qimenCalc(){
+try{
+var y=parseInt(document.getElementById("y").value);
+var m=parseInt(document.getElementById("m").value);
+var d=parseInt(document.getElementById("d").value);
+var h=parseInt(document.getElementById("h").value);
+
+// 四柱 - 使用ikun天文历核心算法
+var ygz,mgz,dgz,hz,hg;
+try{
+var J2000=2451545,radd=Math.PI/180;
+var Y=y,M=m,DD=d+(h/24.0);
+var aa=Math.floor((14-M)/12);
+var yy2=Y+4800-aa,mm2=M+12*aa-3;
+var jd0=DD+Math.floor((153*mm2+2)/5)+365*yy2+Math.floor(yy2/4)-Math.floor(yy2/100)+Math.floor(yy2/400)-32045-0.5;
+var ob={};
+obb.mingLiBaZi(jd0-J2000,120*radd,ob);
+ygz=ob.bz_jn||'';
+mgz=ob.bz_jy||'';
+dgz=ob.bz_jr||'';
+var hgz=ob.bz_js||'';
+hz=hgz.charAt(1);
+hg=hgz.charAt(0);
+}catch(e){
+// 降级：本地简算
+var yy=((y-1984)%60+60)%60;
+ygz=T[yy%10]+Z[yy%12];
+mgz=T[(yy%10+2+m-1)%10]+Z[(m+1)%12];
+var aa=Math.floor((14-m)/12);
+var y2=y+4800-aa,m2=m+12*aa-3;
+var jd=d+Math.floor((153*m2+2)/5)+365*y2+Math.floor(y2/4)-Math.floor(y2/100)+Math.floor(y2/400)-32045;
+var dd=((jd-2451545+40)%60+60)%60;
+dgz=T[dd%10]+Z[dd%12];
+hz=Z[Math.floor((h+1)/2)%12];
+hg=T[(dd%10+Z.indexOf(hz))%10];
+}
+
+// 阴阳遁和局数（简化）
+var yd=(m===12||m<=2)?1:0;
+var ju=(dd%9)+1;
+if(ju===0)ju=9;
+if(yd===0)ju=10-ju;
+
+// 旬首
+var hzIdx=Z.indexOf(hz);
+var hgIdx=T.indexOf(hg);
+var xsIdx=Math.floor((hzIdx-hgIdx+10)/2)%6;
+var xs=["甲子","甲戌","甲申","甲午","甲辰","甲寅"][xsIdx];
+var xsYi=["戊","己","庚","辛","壬","癸"][xsIdx];
+
+// 空亡
+var dzIdx=Z.indexOf(dgz.charAt(1));
+var kw=Z[(dzIdx+2)%12]+Z[(dzIdx+3)%12];
+
+// 地盘三奇六仪
+var dp=[];
+for(var i=0;i<9;i++){
+var g=yd?((ju-1+i)%9):((ju-1-i+9)%9);
+dp[g]=SQ61[i];
+}
+
+// 旬首落宫
+var xsGong=0;
+for(var i=0;i<9;i++){if(dp[i]===xsYi){xsGong=i+1;break;}}
+
+// 值符值使
+var zhiFu=GONG_XING[xsGong-1];
+var zhiShi=GONG_MEN[xsGong-1];
+
+// 时干落宫
+var sgGong=0;
+for(var i=0;i<9;i++){if(dp[i]===hg){sgGong=i+1;break;}}
+
+// 九星转盘：值符落时干宫，顺时针排
+var zhiFuIdx=XN.indexOf(zhiFu);
+var tpXing=[];
+for(var i=0;i<9;i++){
+tpXing[(sgGong-1+i)%9]=XN[(zhiFuIdx+i)%9];
+}
+
+// 天盘干
+var tpGan=[];
+for(var i=0;i<9;i++){
+var x=tpXing[i];
+var benGong=XN.indexOf(x)+1;
+tpGan[i]=dp[benGong-1];
+}
+
+// 八门：值使门从旬首宫位数到时辰
+var hzNum=hzIdx+1;
+var menGong=((xsGong-1)+(hzNum-1))%9+1;
+var menIdx=MEN.indexOf(zhiShi);
+var tpMen=[];
+for(var i=0;i<9;i++){
+tpMen[(menGong-1+i)%9]=MEN[(menIdx+i)%8];
+}
+
+// 八神：值符落时干宫
+var shenGong=sgGong;
+var tpShen=[];
+if(yd===1){
+for(var i=0;i<8;i++){tpShen[(shenGong-1+i)%9]=SN[i];}
+}else{
+for(var i=0;i<8;i++){tpShen[(shenGong-1-i+9)%9]=SN[i];}
+}
+
+// 显示
+document.getElementById("info").innerHTML=
+ygz+" "+mgz+" "+dgz+" "+hg+hz+" | "+(yd?"阳":"阴")+"遁"+ju+"局 | 旬首:"+xs+"("+xsYi+") | 值符:"+zhiFu+" 值使:"+zhiShi+"门 | 空亡:"+kw;
+
+// 输出
+var s='<div class="qg">';
+for(var i=0;i<9;i++){
+var g=SHOW[i];
+s+='<div class="gc"><div class="gn">'+GONG[g-1]+'</div><div class="tp">'+tpGan[g-1]+'</div><div class="dp">'+dp[g-1]+'</div><div class="men">'+tpMen[g-1]+'门</div><div class="xing">'+tpXing[g-1]+'</div><div class="shen">'+(tpShen[g-1]||"")+'</div></div>';
+}
+s+='</div>';
+document.getElementById("qm").innerHTML=s;
+}catch(e){
+document.getElementById("info").innerHTML="错误:"+e.message;
+}
+}
+nowTime();
+</script>
+</body>
+</html>

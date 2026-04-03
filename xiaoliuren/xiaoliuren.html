@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小六壬排盘</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card: #fafafa;
+      --border: #e0e0e0;
+      --gold: #b8860b;
+      --gold2: #cd9b1d;
+      --text: #333333;
+      --muted: #888888;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Serif SC', 'SimSun', serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 860px; margin: 0 auto; }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      color: var(--gold);
+      letter-spacing: 0.4em;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 28px;
+      letter-spacing: 0.2em;
+    }
+
+    /* ── 输入区 ── */
+    .input-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .input-card h2 {
+      color: var(--gold);
+      font-size: 0.95rem;
+      letter-spacing: 0.2em;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-end;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+    .form-group input, .form-group select {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input[type="number"] { width: 90px; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    .btn {
+      background: linear-gradient(135deg, #8b6914, #b8860b);
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 28px;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 0.2em;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-sm {
+      background: #ffffff;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+    }
+    .btn-sm:hover { background: #fffdf5; }
+
+    /* ── 结果区 ── */
+    .result-area { display: none; }
+    .result-area.show { display: block; }
+
+    /* 时间信息条 */
+    .time-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+    }
+    .time-item .label { font-size: 0.72rem; color: var(--muted); }
+    .time-item .value { font-size: 1rem; color: var(--gold); letter-spacing: 0.05em; }
+
+    /* ── 六宫两行三列布局 ── */
+    /* 第一行：2宫  3宫  4宫 */
+    /* 第二行：1宫  6宫  5宫 */
+    .gong-ring {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .gong-ring .gc-2 { grid-column: 1; grid-row: 1; }
+    .gong-ring .gc-3 { grid-column: 2; grid-row: 1; }
+    .gong-ring .gc-4 { grid-column: 3; grid-row: 1; }
+    .gong-ring .gc-1 { grid-column: 1; grid-row: 2; }
+    .gong-ring .gc-6 { grid-column: 2; grid-row: 2; }
+    .gong-ring .gc-5 { grid-column: 3; grid-row: 2; }
+
+    .gong-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 10px 10px;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .gong-card.self-gong {
+      border-color: var(--gold);
+      background: #fffdf5;
+      box-shadow: 0 0 12px rgba(184,134,11,0.2);
+    }
+    .gong-card.self-gong::before {
+      content: '自身';
+      position: absolute;
+      top: -11px; left: 50%; transform: translateX(-50%);
+      background: var(--gold);
+      color: #ffffff;
+      font-size: 0.65rem;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-weight: bold;
+      z-index: 1;
+    }
+    .gong-num {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .gong-name {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: var(--gold);
+      margin-bottom: 6px;
+      letter-spacing: 0.1em;
+    }
+    .gong-jixiong {
+      font-size: 0.7rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-bottom: 7px;
+      display: inline-block;
+    }
+    .ji     { background: #e8f5e9; color: #2e7d32; }
+    .xiong  { background: #ffebee; color: #c62828; }
+    .zhong  { background: #f5f5f5; color: #757575; }
+
+    /* 干支纳音行 */
+    .gong-gz {
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.03em;
+      margin-bottom: 3px;
+      min-height: 1.5rem;
+    }
+    .gong-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .gong-nayin {
+      font-size: 0.72rem;
+      color: #666;
+      margin-bottom: 3px;
+      min-height: 1rem;
+    }
+
+    /* 十二神 */
+    .gong-shen {
+      font-size: 0.78rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+      min-height: 1.1rem;
+      letter-spacing: 0.05em;
+    }
+    .gong-shen.shen-zaizai {
+      text-shadow: 0 0 4px currentColor;
+    }
+
+    /* 主宰神宫位高亮 */
+    .gong-card.zaizai-gong {
+      border-color: #1976d2;
+      background: #e3f2fd;
+    }
+
+    /* 六亲 */
+    .gong-liuqin {
+      font-size: 0.72rem;
+      padding: 1px 6px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-top: 3px;
+    }
+    .lq-父母   { background: #e3f2fd; color: #1565c0; }
+    .lq-子孙   { background: #e8f5e9; color: #2e7d32; }
+    .lq-妻财   { background: #f3e5f5; color: #7b1fa2; }
+    .lq-官鬼   { background: #ffebee; color: #c62828; }
+    .lq-兄弟   { background: #fff8e1; color: #f57f17; }
+    .lq-自身   { background: #fffdf5; color: #b8860b; border: 1px solid #b8860b; }
+
+    .gong-desc {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* 五行色 */
+    .wood  { color: #2e7d32; }
+    .fire  { color: #c62828; }
+    .earth { color: #b8860b; }
+    .metal { color: #1565c0; }
+    .water { color: #0277bd; }
+
+    /* ── 响应式布局 ── */
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      h1 { font-size: 1.5rem; letter-spacing: 0.2em; }
+      .subtitle { font-size: 0.75rem; }
+      .input-card { padding: 14px; }
+      .form-row { gap: 10px; }
+      .form-group input[type="number"] { width: 70px; }
+      .time-bar { padding: 10px 12px; gap: 12px; }
+      .time-item .value { font-size: 0.9rem; }
+    }
+
+    @media (max-width: 520px) {
+      h1 { font-size: 1.3rem; }
+      .form-row { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr 1fr; 
+        gap: 8px; 
+      }
+      .form-row > .form-group:nth-child(4) { grid-column: 1 / 3; }
+      .form-row > .form-group:nth-child(5) { grid-column: 3; grid-row: 2; }
+      .form-row > .form-group:nth-child(6) { grid-column: 1 / 3; }
+      .form-row > button { 
+        grid-column: 3; 
+        grid-row: 2; 
+      }
+      .btn { grid-column: 1 / 4 !important; }
+      .gong-ring { gap: 6px; }
+      .gong-card { padding: 8px 4px; }
+      .gong-name { font-size: 0.9rem; }
+      .gong-gz { font-size: 1rem; }
+      .gong-meta { font-size: 0.65rem; }
+      .gong-nayin { font-size: 0.6rem; }
+      .gong-shen { font-size: 0.7rem; }
+      .gong-liuqin { font-size: 0.65rem; }
+      .gong-desc { font-size: 0.6rem; }
+      .time-bar { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 8px; 
+      }
+    }
+
+    @media (max-width: 380px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .btn { grid-column: 1 / 3 !important; }
+    }
+
+    /* ── 宫位详情面板 ── */
+    .gong-detail {
+      background: var(--card);
+      border: 2px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 0;
+      margin-top: 16px;
+      display: none;
+      animation: slideIn 0.2s ease;
+    }
+    .gong-detail.show { display: block; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .gong-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #fffdf5, #fff);
+    }
+    .detail-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+    }
+    .detail-close {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--muted);
+      font-size: 1.2rem;
+      text-align: center;
+      line-height: 26px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .detail-close:hover { background: #e0e0e0; color: #333; }
+    .detail-content { padding: 16px; }
+    .detail-section {
+      font-size: 0.78rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      margin: 12px 0 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .detail-row {
+      display: flex;
+      gap: 12px;
+      padding: 4px 0;
+      font-size: 0.88rem;
+    }
+    .detail-shen-concept, .detail-shen-geography, .detail-shen-animals,
+    .detail-shen-plants, .detail-shen-objects, .detail-shen-people {
+      display: flex;
+      gap: 12px;
+      padding: 4px 0;
+      font-size: 0.88rem;
+      align-items: flex-start;
+    }
+    .detail-label {
+      min-width: 60px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .detail-value { color: var(--text); word-break: break-all; }
+    .detail-desc {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text);
+      padding: 4px 0;
+    }
+    .detail-self-tip {
+      font-size: 0.78rem;
+      color: var(--gold);
+      background: #fffdf5;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .zaizai { color: #1976d2; font-weight: bold; }
+
+    /* ── 手机详情面板优化 ── */
+    @media (max-width: 520px) {
+      .detail-content { padding: 12px; }
+      .detail-section { font-size: 0.72rem; margin: 10px 0 4px; }
+      .detail-row { font-size: 0.8rem; gap: 8px; flex-wrap: wrap; }
+      .detail-shen-concept, .detail-shen-geography, .detail-shen-animals,
+      .detail-shen-plants, .detail-shen-objects, .detail-shen-people { 
+        font-size: 0.8rem; 
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .detail-label { min-width: 50px; }
+      .detail-value { font-size: 0.78rem; width: 100%; }
+      .detail-desc { font-size: 0.8rem; line-height: 1.6; }
+      .detail-title { font-size: 1rem; }
+      .detail-shen-concept .detail-value,
+      .detail-shen-geography .detail-value,
+      .detail-shen-animals .detail-value,
+      .detail-shen-plants .detail-value,
+      .detail-shen-objects .detail-value,
+      .detail-shen-people .detail-value {
+        min-width: 0;
+        width: calc(100% - 58px);
+        word-break: break-all;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+<a href="../index.html" style="display:inline-block;background:#b8860b;color:#fff;border-radius:6px;padding:6px 14px;font-size:13px;text-decoration:none;margin-bottom:10px">← 返回主页</a>
+  <h1>小 六 壬 排 盘</h1>
+  <p class="subtitle">大安 · 留连 · 速喜 · 赤口 · 小吉 · 空亡</p>
+
+  <!-- 输入区 -->
+  <div class="input-card">
+    <h2>▶ 起课参数</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>年</label>
+        <input type="number" id="inp-year" value="2026" min="1900" max="2100" />
+      </div>
+      <div class="form-group">
+        <label>月</label>
+        <input type="number" id="inp-month" value="3" min="1" max="12" />
+      </div>
+      <div class="form-group">
+        <label>日</label>
+        <input type="number" id="inp-day" value="25" min="1" max="31" />
+      </div>
+      <div class="form-group">
+        <label>时（0-23）</label>
+        <input type="number" id="inp-hour" value="11" min="0" max="23" />
+      </div>
+      <div class="form-group">
+        <label>报数（自身数）</label>
+        <input type="number" id="inp-num" value="1" min="1" />
+        <span class="hint">对6取余定自身宫位</span>
+      </div>
+      <div class="form-group">
+        <label>占事</label>
+        <select id="inp-matter">
+          <option value="general">综合</option>
+          <option value="wealth">财运</option>
+          <option value="career">事业</option>
+          <option value="love">感情</option>
+          <option value="health">健康</option>
+          <option value="travel">出行</option>
+          <option value="lawsuit">官司</option>
+        </select>
+      </div>
+      <button class="btn-sm" onclick="setNow()">取当前时间</button>
+      <button class="btn" onclick="paipan()">起 课</button>
+    </div>
+  </div>
+
+  <!-- 结果区 -->
+  <div class="result-area" id="result">
+    <!-- 时间信息 -->
+    <div class="time-bar" id="time-bar"></div>
+
+    <!-- 六宫两行三列主盘 -->
+    <div class="gong-ring" id="gong-ring"></div>
+  </div>
+</div>
+
+<script src="../sxwnl/core.js"></script>
+<script src="xiaoliuren.js"></script>
+</body>
+</html>

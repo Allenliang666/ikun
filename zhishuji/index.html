@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>至数纪</title>
+  <style>
+    :root {
+      --bg: #0a0a12;
+      --card: #12121f;
+      --border: #252540;
+      --gold: #c8a84b;
+      --gold2: #f0d080;
+      --text: #e8e0d0;
+      --muted: #666;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Serif SC', 'SimSun', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: var(--gold2);
+      letter-spacing: 0.4em;
+      margin-bottom: 8px;
+      text-shadow: 0 0 30px rgba(200,168,75,0.4);
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 30px;
+      letter-spacing: 0.15em;
+    }
+
+    /* 主数字 */
+    .main-number {
+      font-size: 10rem;
+      font-weight: bold;
+      color: var(--gold2);
+      text-shadow: 
+        0 0 60px rgba(200,168,75,0.6),
+        0 0 120px rgba(200,168,75,0.3);
+      line-height: 1;
+      margin-bottom: 16px;
+      font-family: 'Times New Roman', serif;
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.95; }
+    }
+
+    .cycle-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+      letter-spacing: 0.1em;
+    }
+
+    /* 时间信息卡片 */
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #1a1a28;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 0.82rem; color: var(--muted); }
+    .info-value { font-size: 0.92rem; color: var(--gold2); }
+
+    /* 进度条 */
+    .progress-section { margin-top: 16px; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .progress-bar {
+      height: 6px;
+      background: #1a1a28;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8b6914, var(--gold2));
+      border-radius: 3px;
+      transition: width 1s linear;
+    }
+
+    /* 倒计时 */
+    .countdown {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #1a1a28;
+    }
+    .countdown-title {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .countdown-time {
+      font-size: 1.4rem;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.1em;
+    }
+
+    /* 九宫格 */
+    .grid-9 {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
+      margin-top: 20px;
+    }
+    .grid-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a28;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+    .grid-cell.active {
+      background: var(--gold);
+      color: #0a0a12;
+      font-weight: bold;
+      box-shadow: 0 0 16px rgba(200,168,75,0.5);
+      transform: scale(1.15);
+    }
+
+    /* 设置按钮 */
+    .settings-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gold);
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+    .settings-btn:hover {
+      background: #1a1a28;
+      border-color: var(--gold);
+    }
+
+    /* 设置面板 */
+    .settings-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .settings-panel.show { display: flex; }
+    .settings-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .settings-title {
+      font-size: 1.1rem;
+      color: var(--gold2);
+      margin-bottom: 20px;
+      letter-spacing: 0.1em;
+    }
+    .setting-group {
+      margin-bottom: 16px;
+    }
+    .setting-group label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .setting-group input, .setting-group select {
+      width: 100%;
+      background: #1a1a28;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .setting-group input:focus, .setting-group select:focus {
+      border-color: var(--gold);
+    }
+    .setting-hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--gold);
+      color: #0a0a12;
+      font-weight: bold;
+    }
+    .btn-secondary {
+      background: #1a1a28;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn:hover { opacity: 0.85; }
+
+    .preset-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .preset-btn {
+      padding: 6px 12px;
+      background: #1a1a28;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .preset-btn:hover { border-color: var(--gold); }
+
+    /* 含义 */
+    .meaning {
+      margin-top: 20px;
+      padding: 14px;
+      background: #0f0f18;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #a0a0a0;
+      line-height: 1.7;
+    }
+    .meaning-title {
+      color: var(--gold2);
+      font-size: 0.88rem;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 480px) {
+      .main-number { font-size: 7rem; }
+      .grid-9 { grid-template-columns: repeat(9, 1fr); gap: 4px; }
+      .grid-cell { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="settings-btn" onclick="toggleSettings()">⚙</button>
+
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-content">
+    <div class="settings-title">⚙ 计时设置</div>
+    
+    <div class="setting-group">
+      <label>起始时间</label>
+      <input type="datetime-local" id="inp-start" step="60" onchange="calcEndNum()" />
+      <div class="setting-hint">该时刻所在时辰记为第 1 个时辰</div>
+    </div>
+    
+    <div class="setting-group">
+      <label>结束时间（可选）</label>
+      <input type="datetime-local" id="inp-end" step="60" onchange="calcEndNum()" />
+      <div class="setting-hint">留空则无限循环；设置后到达终点会提示</div>
+    </div>
+    
+    <div class="setting-group" id="end-result-group" style="display:none">
+      <label>结束时的数字</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+        <div style="font-size:2.5rem;color:var(--gold2);font-weight:bold" id="end-number">-</div>
+        <div style="font-size:0.85rem;color:var(--muted)">
+          <div>历时：<span id="end-duration" style="color:var(--text)">-</span></div>
+          <div>轮次：<span id="end-cycle" style="color:var(--text)">-</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label>快速预设</label>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="setPreset('zhishu2025')">2025冬至</button>
+        <button class="preset-btn" onclick="setPreset('zhishu2026')">2026冬至</button>
+        <button class="preset-btn" onclick="setPreset('today')">今天0点</button>
+        <button class="preset-btn" onclick="setPreset('now')">此刻</button>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="resetSettings()">恢复默认</button>
+      <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-secondary" onclick="toggleSettings()" style="flex:none;width:100%">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <h1>至 数 纪</h1>
+  <p class="subtitle" id="subtitle">以冬至为始 · 按时辰计数 · 九数循环</p>
+
+  <div class="main-number" id="main-number">-</div>
+  <div class="cycle-label" id="cycle-label">第 - 轮循环</div>
+
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-label">当前时间</span>
+      <span class="info-value" id="now-time">-</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">当前时辰</span>
+      <span class="info-value" id="current-shichen" style="color:var(--gold2)">-</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">起始点</span>
+      <span class="info-value" id="start-time">-</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">距起点</span>
+      <span class="info-value" id="elapsed">-</span>
+    </div>
+    <div class="info-row" id="end-row" style="display:none">
+      <span class="info-label">距终点</span>
+      <span class="info-value" id="remaining">-</span>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>当前数字进度</span>
+        <span id="progress-text">-</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="countdown">
+      <div class="countdown-title">距离下一时辰（下一数字）</div>
+      <div class="countdown-time" id="next-countdown">--:--:--</div>
+    </div>
+  </div>
+
+  <div class="grid-9" id="grid-9"></div>
+
+  <div class="meaning">
+    <div class="meaning-title" id="meaning-title">数字含义</div>
+    <div id="meaning-text">设置起始时间后开始计时</div>
+  </div>
+</div>
+
+<script src="zhishuji.js"></script>
+</body>
+</html>

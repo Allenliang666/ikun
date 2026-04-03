@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>大六壬金口诀</title>
+<script src="../sxwnl/core.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"SimSun",serif;background:#fff;color:#333;padding:15px}
+h1{text-align:center;color:#b8860b;font-size:1.5rem;margin:5px 0}
+.input-row{text-align:center;margin:10px 0}
+.input-row input,.input-row select{border:1px solid #ddd;border-radius:4px;padding:5px 8px;font-size:1rem}
+.input-row button{background:#b8860b;color:#fff;border:none;border-radius:4px;padding:6px 15px;cursor:pointer}
+.info{background:#fafafa;padding:10px;border-radius:8px;margin:10px auto;max-width:500px;text-align:center;font-size:0.9rem;line-height:1.8}
+.gong12{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#e0e0e0;padding:4px;border-radius:8px;max-width:400px;margin:10px auto}
+.gong{background:#fff;border:2px solid #e0e0e0;border-radius:6px;padding:5px;text-align:center;cursor:pointer}
+.gong:hover{border-color:#b8860b;background:#fffdf5}
+.gong.active{border-color:#1976d2;background:#e3f2fd}
+.gong>div{margin:2px 0;font-size:0.85rem}
+.ry{font-weight:bold;color:#333}
+.gs{color:#666;font-size:0.8rem}
+.yj{color:#b8860b;font-size:0.8rem}
+.df{font-weight:bold;font-size:1rem}
+.status{color:#d9534f;font-size:0.75rem;margin-left:2px}
+.empty{background:transparent;border:none}
+.detail{max-width:400px;margin:15px auto;padding:15px;background:#f5f5f5;border-radius:8px;border:1px solid #ddd;display:none}
+.detail.show{display:block}
+.detail h3{margin:0 0 10px 0;color:#b8860b;text-align:center}
+.detail-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e0e0e0}
+.detail-item:last-child{border-bottom:none}
+.detail-label{color:#666}
+.detail-value{font-weight:bold;color:#333}
+.error{color:red}
+.back-btn{display:inline-block;background:#b8860b;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;text-decoration:none;margin-bottom:10px}
+.back-btn:hover{background:#a07000}
+</style>
+</head>
+<body>
+<a class="back-btn" href="../index.html">← 返回主页</a>
+<h1>大六壬金口诀</h1>
+<div class="input-row">
+<button onclick="nowTime()">当前时间</button>
+<input id="y" value="2026" size="5">
+<input id="m" value="3" size="4">
+<input id="d" value="30" size="4">
+<input id="h" value="21" size="4">
+</div>
+<div class="input-row">
+月将<select id="yj">
+<option value="0">神后(子)</option><option value="1">大吉(丑)</option><option value="2">功曹(寅)</option>
+<option value="3">太冲(卯)</option><option value="4">天罡(辰)</option><option value="5">太乙(巳)</option>
+<option value="6">胜光(午)</option><option value="7">小吉(未)</option><option value="8">传送(申)</option>
+<option value="9">从魁(酉)</option><option value="10">河魁(戌)</option><option value="11">登明(亥)</option>
+</select>
+地分<select id="df">
+<option value="0">子</option><option value="1">丑</option><option value="2">寅</option>
+<option value="3">卯</option><option value="4">辰</option><option value="5">巳</option>
+<option value="6">午</option><option value="7">未</option><option value="8">申</option>
+<option value="9">酉</option><option value="10">戌</option><option value="11">亥</option>
+</select>
+性别<select id="gender"><option value="1">男</option><option value="0">女</option></select>
+<button onclick="startPaipan()">起课</button>
+</div>
+<div class="info" id="info"></div>
+<div class="gong12" id="gong12"></div>
+<div class="detail" id="detail">
+<h3>宫位详情</h3>
+<div class="detail-item"><span class="detail-label">地分：</span><span class="detail-value" id="d-df"></span></div>
+<div class="detail-item"><span class="detail-label">人元：</span><span class="detail-value" id="d-ry"></span></div>
+<div class="detail-item"><span class="detail-label">贵神：</span><span class="detail-value" id="d-gs"></span></div>
+<div class="detail-item"><span class="detail-label">将神：</span><span class="detail-value" id="d-js"></span></div>
+<div class="detail-item"><span class="detail-label">旺相休囚死：</span><span class="detail-value" id="d-wx"></span></div>
+</div>
+
+<script>
+var API_KEY="tqArmsNXaFJ8frahmTFLpFrlV4";
+var T=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+var Z=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+var YJN=["神后","大吉","功曹","太冲","天罡","太乙","胜光","小吉","传送","从魁","河魁","登明"];
+var GS=["贵人","螣蛇","朱雀","六合","勾陈","青龙","天空","白虎","太常","玄武","太阴","天后"];
+var GSZ=["丑","巳","午","卯","辰","寅","戌","申","未","子","酉","亥"];
+var DZ=["巳","午","未","申","辰","酉","卯","戌","寅","丑","子","亥"];
+var PG=["命宫","兄弟","妻妾","子孙","财帛","田宅","官禄","疾恶","奴仆","福德","相貌","父母"];
+
+var TGanWX={甲:"木",乙:"木",丙:"火",丁:"火",戊:"土",己:"土",庚:"金",辛:"金",壬:"水",癸:"水"};
+var ZhiWX={子:"水",丑:"土",寅:"木",卯:"木",辰:"土",巳:"火",午:"火",未:"土",申:"金",酉:"金",戌:"土",亥:"水"};
+
+// 干支转化表：干→地支
+var Gan2Zhi={甲:"寅",乙:"卯",丙:"午",丁:"巳",戊:"辰",己:"丑",庚:"申",辛:"酉",壬:"子",癸:"亥"};
+
+// 五行生克
+var ke={木:"土",土:"水",水:"火",火:"金",金:"木"}; // 我克
+var sheng={木:"水",火:"木",土:"火",金:"土",水:"金"}; // 生我
+var suoSheng={木:"火",火:"土",土:"金",金:"水",水:"木"}; // 我生
+var beike={木:"金",土:"木",水:"土",火:"水",金:"火"}; // 克我
+
+var paipanData=[];
+
+function nowTime(){
+var n=new Date();
+document.getElementById("y").value=n.getFullYear();
+document.getElementById("m").value=n.getMonth()+1;
+document.getElementById("d").value=n.getDate();
+document.getElementById("h").value=n.getHours();
+}
+
+// 自动月将
+var jqYj=[
+{m:1,d:5,yj:1},{m:2,d:4,yj:0},{m:3,d:6,yj:11},{m:4,d:5,yj:10},
+{m:5,d:6,yj:9},{m:6,d:6,yj:8},{m:7,d:7,yj:7},{m:8,d:8,yj:6},
+{m:9,d:8,yj:5},{m:10,d:8,yj:4},{m:11,d:7,yj:3},{m:12,d:7,yj:2}
+];
+function autoYueJiang(m,d){
+for(var i=jqYj.length-1;i>=0;i--){
+var jq=jqYj[i];
+if(m>jq.m||(m===jq.m&&d>=jq.d))return jq.yj;
+}
+return 2;
+}
+
+// 获取转化后的地支（用于判断一类朝元）
+function getTransZhi(gan,zhi){
+var transZhi=Gan2Zhi[gan];
+return transZhi||zhi;
+}
+
+// 判断克的关系：A是否克B
+function isKe(a,b){
+return ke[a]===b;
+}
+
+// 计算旺衰 - 返回旺的五行和每个位置的五行状态
+function calcWangShuai(ryGan,ryZhi,gsGan,gsZhi,jsGan,jsZhi,dfZhi){
+// 四位：人元干、人元支、贵神、将神、地分
+// 人元需要转化
+var ryTransZhi=getTransZhi(ryGan,ryZhi);
+var ryWX=TGanWX[ryGan];
+var gsWX=ZhiWX[gsZhi];
+var jsWX=ZhiWX[jsZhi];
+var dfWX=ZhiWX[dfZhi];
+
+// 检查一类朝元：神、将、地分为同一地支，干转化后也是同一地支
+var sameZhi=(gsZhi===jsZhi&&jsZhi===dfZhi&&dfZhi===ryTransZhi);
+
+// 四位俱比：五行相同但地支不同
+var allSameWX=(ryWX===gsWX&&gsWX===jsWX&&jsWX===dfWX);
+
+// 收集四行（转化后的地支五行）
+var rows=[{wx:ryWX,keMe:[],beiKe:[]},{wx:gsWX,keMe:[],beiKe:[]},{wx:jsWX,keMe:[],beiKe:[]},{wx:dfWX,keMe:[],beiKe:[]}];
+
+// 计算每位被谁克、克谁
+for(var i=0;i<4;i++){
+for(var j=0;j<4;j++){
+if(i!==j){
+if(isKe(rows[i].wx,rows[j].wx)){
+rows[i].keMe.push(j);
+}else if(isKe(rows[j].wx,rows[i].wx)){
+rows[i].beiKe.push(j);
+}
+}
+}
+}
+
+// 统计各五行数量
+var wxCount={};
+for(var i=0;i<4;i++){
+var wx=rows[i].wx;
+wxCount[wx]=(wxCount[wx]||0)+1;
+}
+var wxTypes=Object.keys(wxCount);
+
+// 判断旺的五行
+var wangWX=null;
+
+if(wxTypes.length===4){
+// 四位四行：不受克者旺
+for(var i=0;i<4;i++){
+if(rows[i].beiKe.length===0){
+wangWX=rows[i].wx;
+break;
+}
+}
+}else if(wxTypes.length===3){
+// 四位三行：克别人又不被克者旺
+for(var i=0;i<4;i++){
+if(rows[i].keMe.length>0&&rows[i].beiKe.length===0){
+wangWX=rows[i].wx;
+break;
+}
+}
+}else if(wxTypes.length===2){
+var wx1=wxTypes[0],wx2=wxTypes[1];
+var c1=wxCount[wx1],c2=wxCount[wx2];
+if(c1===3&&c2===1){
+// 一比三，多者旺
+wangWX=wx1;
+}else if(c1===1&&c2===3){
+wangWX=wx2;
+}else if(c1===2&&c2===2){
+// 二比二：主克者旺（能克对方）
+if(isKe(wx1,wx2)){
+wangWX=wx1;
+}else if(isKe(wx2,wx1)){
+wangWX=wx2;
+}else{
+// 二比二：受生者旺
+if(sheng[wx1]===wx2){
+wangWX=wx1;
+}else if(sheng[wx2]===wx1){
+wangWX=wx2;
+}else{
+wangWX=wx1; // 默认
+}
+}
+}
+}else if(wxTypes.length===1){
+// 四位一行：俱比或朝元
+if(sameZhi||allSameWX){
+// 一类朝元或俱比 - 在详情里显示特殊标记
+wangWX=wxTypes[0];
+}
+}
+
+// 如果无法判断旺，默认不显示
+if(!wangWX)wangWX=wxTypes[0];
+
+// 计算每位状态
+var status={};
+for(var i=0;i<4;i++){
+var wx=rows[i].wx;
+if(wx===wangWX){
+status[wx]="旺";
+}else if(suoSheng[wangWX]===wx){
+status[wx]="相";
+}else if(sheng[wangWX]===wx){
+status[wx]="休";
+}else if(ke[wangWX]===wx){
+status[wx]="囚";
+}else if(beike[wangWX]===wx){
+status[wx]="死";
+}else{
+status[wx]="平";
+}
+}
+
+return{
+wang:wangWX,
+ryStatus:status[ryWX],
+gsStatus:status[gsWX],
+jsStatus:status[jsWX],
+dfStatus:status[dfWX],
+isChaoYuan:sameZhi,
+isJuBi:allSameWX
+};
+}
+
+function startPaipan(){
+try{
+var y=parseInt(document.getElementById("y").value);
+var m=parseInt(document.getElementById("m").value);
+var d=parseInt(document.getElementById("d").value);
+var h=parseInt(document.getElementById("h").value);
+var dfIdx=parseInt(document.getElementById("df").value);
+var gender=parseInt(document.getElementById("gender").value);
+var dfZhi=Z[dfIdx];
+
+var autoYjIdx=autoYueJiang(m,d);
+document.getElementById("yj").value=autoYjIdx;
+var yjIdx=autoYjIdx;
+
+document.getElementById("info").innerHTML='<span class="loading">正在计算四柱...</span>';
+
+try{
+// 使用ikun天文历核心算法计算四柱
+var J2000=2451545;
+var radd=Math.PI/180;
+// 公历转儒略日（只用日期，不含小时，让天文历算年月日柱）
+var Y=y,M=m,DD=d+0.5; // 正午时刻
+var a=Math.floor((14-M)/12);
+var yy=Y+4800-a,mm=M+12*a-3;
+var jd=DD+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045-0.5;
+var ob={};
+obb.mingLiBaZi(jd-J2000, 120*radd, ob);
+var ygz=ob.bz_jn||'';
+var mgz=ob.bz_jy||'';
+var dgz=ob.bz_jr||'';
+// 时柱：根据输入小时自算（不依赖天文历的时辰，避免时区偏差）
+// 时支：子0 丑1 寅2 卯3 辰4 巳5 午6 未7 申8 酉9 戌10 亥11
+// 时支索引 = floor((h+1)/2) % 12
+var hzIdx2=Math.floor((h+1)/2)%12;
+var hz=Z[hzIdx2];
+// 时干：以日干起子时，五虎遁年起月法类似
+// 甲己日起甲子，乙庚日起丙子，丙辛日起戊子，丁壬日起庚子，戊癸日起壬子
+var dayGanIdx=T.indexOf(dgz.charAt(0));
+var hStartIdx=[0,2,4,6,8,0,2,4,6,8][dayGanIdx]; // 甲乙丙丁戊己庚辛壬癸
+var hgIdx=(hStartIdx+hzIdx2)%10;
+var hgz=T[hgIdx]+hz;
+calcPaipan(y,m,d,h,ygz,mgz,dgz,hgz,hz,yjIdx,dfIdx,gender,dfZhi);
+}catch(e){
+document.getElementById("info").innerHTML="<span class='error'>干支计算错误: "+e.message+"</span>";
+}
+}catch(e){
+document.getElementById("info").innerHTML="<span class='error'>错误: "+e.message+"</span>";
+}
+}
+
+function calcPaipan(y,m,d,h,ygz,mgz,dgz,hgz,hz,yjIdx,dfIdx,gender,dfZhi){
+try{
+var dayGan=dgz.charAt(0);
+var hzIdx=Z.indexOf(hz);
+var yjZhi=Z[yjIdx];
+var yjZhiIdx=Z.indexOf(yjZhi);
+var jiangShenIdx=(yjZhiIdx+(dfIdx-hzIdx+12))%12;
+var jiangShenZhi=Z[jiangShenIdx];
+
+var isDayTime=["卯","辰","巳","午","未","申","酉"].indexOf(hz)>=0;
+var guiStart,guiClockwise;
+if(dayGan==="甲"||dayGan==="戊"||dayGan==="庚"){guiStart=isDayTime?"丑":"未";guiClockwise=isDayTime;}
+else if(dayGan==="乙"||dayGan==="己"){guiStart=isDayTime?"子":"申";guiClockwise=isDayTime;}
+else if(dayGan==="丙"||dayGan==="丁"){guiStart=isDayTime?"亥":"酉";guiClockwise=isDayTime;}
+else if(dayGan==="壬"||dayGan==="癸"){guiStart=isDayTime?"巳":"卯";guiClockwise=!isDayTime;}
+else{guiStart=isDayTime?"午":"寅";guiClockwise=!isDayTime;}
+
+var gsL=[];
+var guiStartZhiIdx=Z.indexOf(guiStart);
+for(var i=0;i<12;i++){
+var z=guiClockwise?Z[(guiStartZhiIdx+i)%12]:Z[(guiStartZhiIdx-i+12)%12];
+gsL.push({z:z,g:GS[i]});
+}
+var dfGuishen="",dfGuishenZhi="";
+for(var i=0;i<gsL.length;i++){if(gsL[i].z===dfZhi){dfGuishen=gsL[i].g;dfGuishenZhi=GSZ[GS.indexOf(dfGuishen)];break;}}
+
+var wzdStart={甲:"甲",己:"甲",乙:"丙",庚:"丙",丙:"戊",辛:"戊",丁:"庚",壬:"庚",戊:"壬",癸:"壬"};
+var ryStartGan=wzdStart[dayGan];
+var ryStartIdx=T.indexOf(ryStartGan);
+
+var yzNum=Z.indexOf(ygz.charAt(1))+1;
+var mzNum=Z.indexOf(mgz.charAt(1))+1;
+var hzNum=Z.indexOf(hz)+1;
+var mgNum=hzNum-mzNum+yzNum;
+if(mgNum<=0)mgNum+=12;
+if(mgNum>12)mgNum-=12;
+var mgZ=Z[mgNum-1];
+
+var yStemIdx=T.indexOf(ygz.charAt(0));
+var isYangYear=yStemIdx%2===0;
+var clockwise=(isYangYear&&gender===1)||(!isYangYear&&gender===0);
+var pgOrder=[];
+for(var i=0;i<12;i++){
+var idx=clockwise?(mgNum-1+i)%12:(mgNum-1-i+12)%12;
+pgOrder.push({z:Z[idx],pg:PG[i]});
+}
+
+document.getElementById("info").innerHTML=
+"<b>四柱：</b>"+ygz+" "+mgz+" "+dgz+" "+hgz+"<br>"+
+"<b>地分：</b>"+dfZhi+"　<b>月将：</b>"+YJN[yjIdx]+"("+yjZhi+")　<b>贵神：</b>"+dfGuishen+"("+dfGuishenZhi+")　<b>命宫：</b>"+mgZ;
+
+paipanData=[];
+var mp=[0,1,2,3,4,-1,-1,5,6,-1,-1,7,8,9,10,11];
+var htm="";
+
+for(var p=0;p<16;p++){
+var idx=mp[p];
+if(idx<0){htm+="<div class='empty'></div>";paipanData.push(null);continue;}
+var df2=DZ[idx];
+var df2Idx=Z.indexOf(df2);
+var js2Idx=(yjZhiIdx+(df2Idx-hzIdx+12))%12;
+var js2Zhi=Z[js2Idx];
+var js2Gan=T[(ryStartIdx+js2Idx)%10];
+var gs2={z:df2,g:""};
+for(var j=0;j<gsL.length;j++){if(gsL[j].z===df2){gs2=gsL[j];break;}}
+var gs2FixedZhi="",gs2Gan="";
+if(gs2.g){var gIdx2=GS.indexOf(gs2.g);gs2FixedZhi=GSZ[gIdx2];gs2Gan=T[(ryStartIdx+Z.indexOf(gs2FixedZhi))%10];}
+var ry2Gan=T[(ryStartIdx+df2Idx)%10];
+var pgInfo=null;
+for(var k=0;k<pgOrder.length;k++){if(pgOrder[k].z===df2){pgInfo=pgOrder[k];break;}}
+
+// 计算旺衰
+var ws=calcWangShuai(ry2Gan,df2,gs2FixedZhi,gs2FixedZhi,js2Gan,js2Zhi,df2);
+
+paipanData.push({
+df:df2,
+js:js2Gan+js2Zhi+" "+YJN[js2Idx],
+gs:gs2Gan+gs2FixedZhi+" "+gs2.g,
+ry:ry2Gan,
+pg:pgInfo?pgInfo.pg:"",
+ws:ws
+});
+
+htm+="<div class='gong' onclick='showDetail("+p+")'>"+
+"<div class='ry'>"+ry2Gan+"<span class='status'>"+ws.ryStatus+"</span></div>"+
+"<div class='gs'>"+gs2Gan+gs2FixedZhi+" "+gs2.g+"<span class='status'>"+ws.gsStatus+"</span></div>"+
+"<div class='yj'>"+js2Gan+js2Zhi+" "+YJN[js2Idx]+"<span class='status'>"+ws.jsStatus+"</span></div>"+
+"<div class='df'>"+df2+(pgInfo?" "+pgInfo.pg:"")+"<span class='status'>"+ws.dfStatus+"</span></div></div>";
+}
+
+document.getElementById("gong12").innerHTML=htm;
+document.getElementById("detail").classList.add("show");
+showDetail(0);
+}catch(e){
+document.getElementById("info").innerHTML="<span class='error'>排盘错误: "+e.message+"</span>";
+}
+}
+
+function showDetail(p){
+var gongs=document.querySelectorAll('.gong');
+for(var i=0;i<gongs.length;i++)gongs[i].classList.remove('active');
+if(gongs[p])gongs[p].classList.add('active');
+var data=paipanData[p];
+if(!data)return;
+document.getElementById("d-df").innerHTML=data.df;
+document.getElementById("d-ry").innerHTML=data.ry+" - "+data.ws.ryStatus;
+document.getElementById("d-gs").innerHTML=data.gs+" - "+data.ws.gsStatus;
+document.getElementById("d-js").innerHTML=data.js+" - "+data.ws.jsStatus;
+var wxInfo="人元:"+data.ws.ryStatus+" 贵神:"+data.ws.gsStatus+" 将神:"+data.ws.jsStatus+" 地分:"+data.ws.dfStatus;
+if(data.ws.isChaoYuan)wxInfo+=" [一类朝元]";
+if(data.ws.isJuBi)wxInfo+=" [四位俱比]";
+document.getElementById("d-wx").innerHTML=wxInfo;
+}
+</script>
+</body>
+</html>
